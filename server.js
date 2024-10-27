@@ -5,6 +5,7 @@ const cors = require("cors");
 // get different routes
 const productRoutes = require("./routes/products");
 const categoryRoutes = require("./routes/categories");
+const userRoutes = require("./routes/user")
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.get('/', (req,res)=>{
 // other routes
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/users', userRoutes);
 
 
 app.listen(3000, ()=>console.log("server listening on port 3000"))
