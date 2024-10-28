@@ -3,6 +3,8 @@ const router = express.Router();
 
 const User = require("../models/user.models");
 
+const Product = require("../models/product.models");
+
 // get endpoint
 
 router.get('/:id',async(req,res)=>{
@@ -17,6 +19,29 @@ router.get('/:id',async(req,res)=>{
         }
     }catch(error){
         res.status(500).json({error:error.message})
+    }
+})
+
+// get cart details
+
+router.get('/cart/:id', async(req,res)=>{
+    try{
+        const user = await User.findById(req.params.id)
+                                .populate('cart.product');
+        
+        if(user){
+            const cartDetails = user.cart.map((item)=>(
+                {
+                product: item.product,
+                quantity: item.quantity
+            }));
+
+            res.status(200).json(cartDetails);
+        }else{
+            res.status(404).json({error: 'User not found'})
+        }
+    }catch(error){
+        res.status(500).json({error: error.message})
     }
 })
 
@@ -66,9 +91,7 @@ router.get('/wishlist/:id', async(req,res)=>{
 })
 
 router.post('/wishlist/add-to-wishlist',async(req,res)=>{
-    console.log(req.body);
     const {userId, productId} = req.body;
-    console.log(userId, productId)
     try{
         const user = await User.findById(userId);
         if(!user) return res.status(404).json({error:'User not found'})
@@ -85,16 +108,67 @@ router.post('/wishlist/add-to-wishlist',async(req,res)=>{
     }
 })
 
-router.post('/wishlist/remove-from-wishlist', async(req,res)=>{
+// delete items from wishlist
+
+router.delete('/wishlist/remove-from-wishlist', async(req,res)=>{
     const {userId, productId} = req.body;
+    console.log(userId, productId);
     try{    
         const user = await User.findById(userId);
         if(!user) return res.status(404).json({error:'User not found'});
         // remove product from wishlist
-        user.wishlist = user.wishlist.filter(id=> id.toString !== productId);
+        user.wishlist = user.wishlist.filter(id=> id.toString() !== productId.toString());
         await user.save();
         return res.status(200).json({message:"Product removed from wishlist"})
     }catch(error){
         res.status(500).json({message : 'Failed to remove product from wishlist', error: error.message})
+    }
+})
+
+// add item to cart or increase quantity if it already exists.
+
+router.post('/cart/add-to-cart', async(req,res)=>{
+    try{
+        const {userId, productId} = req.body;
+        const user = await User.findById(userId)
+                        .populate('cart.product')
+        if(!user) return res.status(404).json({message:"User not found, to add item to cart"})
+        
+        const cartItem = user.cart.find((item)=> item.product._id?.toString() === productId.toString());
+        
+        if(cartItem){
+            cartItem.quantity +=1;
+        }
+        else{
+            const product = await Product.findById(productId);
+            user.cart.push({product: product, quantity: 1});
+        }
+
+        await user.save()
+        return res.status(200).json(user.cart)
+    }catch(error){
+        res.status(500).json({error: 'Error adding product to cart.', error: error.message})
+    }
+})
+
+//  delete item from cart
+
+router.delete('/cart/remove-from-cart', async(req,res)=>{
+    const {userId, productId} = req.body;
+    try{
+        const user = await User.findById(userId)
+                            .populate('cart.product')
+        if(!user) return res.status(404).json({error:'User not found'});
+        // remove product from cart
+        const cartItem = user.cart.find((item)=> item.product._id?.toString() === productId.toString());
+        
+        if(cartItem){
+            cartItem.quantity +=1;
+        }
+        user.cart = user.cart.filter(item=> item.product._id.toString() !== productId.toString());
+        await user.save();
+        return res.status(200).json(user.cart)
+    }catch(error){
+        res.status(500).json({error: 'Error removing product'})
     }
 })
