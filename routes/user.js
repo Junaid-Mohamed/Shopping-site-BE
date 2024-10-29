@@ -211,6 +211,27 @@ router.post('/cart/add-to-cart', async(req,res)=>{
     }
 })
 
+router.put('/cart/update-cart', async(req,res)=>{
+    try{
+        const {userId, productId} = req.body;
+        const user = await User.findById(userId)
+                        .populate('cart.product')
+        if(!user) return res.status(404).json({message:"User not found, to add item to cart"})
+        
+        const cartItem = user.cart.find((item)=> item.product._id?.toString() === productId.toString());
+        
+        //  check if quantity in cartItem is more than 1 and then decrement it
+        if(cartItem && cartItem.quantity > 1){
+            cartItem.quantity -=1;
+        }
+
+        await user.save()
+        return res.status(200).json(user.cart)
+    }catch(error){
+        res.status(500).json({error: 'Error adding product to cart.', error: error.message})
+    }
+})
+
 //  delete item from cart
 
 router.delete('/cart/remove-from-cart', async(req,res)=>{
