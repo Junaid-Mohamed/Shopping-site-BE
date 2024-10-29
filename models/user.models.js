@@ -23,6 +23,10 @@ const UserSchema = new mongoose.Schema({
         city: String,
         state: String,
         postalCode: String,
+        isDefault: {
+            type: Boolean,
+            default: false, // Only one address should have `isDefault` as true
+        },
     }],
     wishlist: [{
         type: mongoose.Schema.Types.ObjectId,

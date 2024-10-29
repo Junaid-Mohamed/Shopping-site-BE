@@ -58,6 +58,66 @@ router.post('/', async(req,res)=>{
     }
 })
 
+// address management
+// add a address
+router.put('/:userId/address', async(req,res)=>{
+    const address = req.body;
+    try{
+        const user = await User.findByIdAndUpdate(req.params.userId, {
+            $push: {address: address }},
+            {new:true});
+            if(user) res.status(200).json({message:"address added successfully.", user:user})
+            else res.status(400).json({message:"address not updated"})
+    }catch(error){
+        res.status(500).json({error:error.message});
+    }
+})
+
+// update an address
+router.put('/:userId/address/:addressId', async(req,res)=>{
+    const {userId, addressId} = req.params;
+    const updatedAddress = req.body;
+
+    try{
+
+        const user = await User.findOneAndUpdate(
+            {_id:userId, 'address._id':addressId},
+            {
+                $set: {
+                "address.$.street": updatedAddress.street,
+                "address.$.city": updatedAddress.city,
+                "address.$.state": updatedAddress.state,
+                "address.$.postalCode": updatedAddress.postalCode,
+                "address.$.isDefault": updatedAddress.isDefault,
+                }
+            }, 
+            {new: true}
+        );
+        res.status(200).json({message:"address updated successfully", user:user})
+
+    }catch(error){
+        res.status(500).json({error:error.message});
+    }
+})
+
+// delete an address
+
+router.delete('/:userId/address/:addressId', async (req,res)=>{
+    const {userId, addressId} = req.params;
+    try{
+        const user = await User.findByIdAndDelete(
+            userId,
+            {$pull: {address:{_id:addressId}}},
+            {new:true}
+        )
+
+        res.status(200).json({message:'address deleted successfully', user:user})
+    }catch(error){
+        res.status(500).json({error:error.message});
+    }
+})
+
+
 router.post('/login', async(req,res)=>{
     const {email, password} = req.body;
     try{
