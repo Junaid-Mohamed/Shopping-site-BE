@@ -241,11 +241,6 @@ router.delete('/cart/remove-from-cart', async(req,res)=>{
                             .populate('cart.product')
         if(!user) return res.status(404).json({error:'User not found'});
         // remove product from cart
-        const cartItem = user.cart.find((item)=> item.product._id?.toString() === productId.toString());
-        
-        if(cartItem){
-            cartItem.quantity +=1;
-        }
         user.cart = user.cart.filter(item=> item.product._id.toString() !== productId.toString());
         await user.save();
         return res.status(200).json(user.cart)
