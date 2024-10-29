@@ -105,7 +105,7 @@ router.put('/:userId/address/:addressId', async(req,res)=>{
 router.delete('/:userId/address/:addressId', async (req,res)=>{
     const {userId, addressId} = req.params;
     try{
-        const user = await User.findByIdAndDelete(
+        const user = await User.findByIdAndUpdate(
             userId,
             {$pull: {address:{_id:addressId}}},
             {new:true}
