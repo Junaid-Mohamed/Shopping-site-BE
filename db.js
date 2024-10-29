@@ -5,7 +5,10 @@ const mongoose = require("mongoose");
 const mongoUri = process.env.MONGODB_URL;
 
 const initializeDb = async() =>{
-    mongoose.connect(mongoUri)
+    mongoose.connect(mongoUri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      })
     .then(()=>{
         console.log("Connected to db successfully.")
     })
