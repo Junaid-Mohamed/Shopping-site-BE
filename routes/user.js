@@ -185,6 +185,39 @@ router.delete('/wishlist/remove-from-wishlist', async(req,res)=>{
     }
 })
 
+// order history management
+
+router.get('/orders/:id', async(req,res)=>{
+    try{
+        const user = await User.findById(req.params.id);
+                                // .populate('cart.product');
+        
+        if(user){
+            const orderDetails = user.orders.map((item)=>(
+                {
+                product: item.product,
+                quantity: item.quantity
+            }));
+
+            res.status(200).json(orderDetails);
+        }else{
+            res.status(404).json({error: 'User not found'})
+        }
+    }catch(error){
+        res.status(500).json({error: error.message})
+    }
+})
+
+// router.get('/orders/:id',async(req,res)=>{
+//     try{
+//         const user = await User.findById(req.params.id);
+//         if(!user) return res.status(404).json({error:'User not found, to fetch order items'})
+//         return res.status(200).json(user.orders);
+//     }catch(error){
+//         res.status(500).json({error:error.message});
+//     }
+// })
+
 // add item to cart or increase quantity if it already exists.
 
 router.post('/cart/add-to-cart', async(req,res)=>{
@@ -244,6 +277,18 @@ router.delete('/cart/remove-from-cart', async(req,res)=>{
         user.cart = user.cart.filter(item=> item.product._id.toString() !== productId.toString());
         await user.save();
         return res.status(200).json(user.cart)
+    }catch(error){
+        res.status(500).json({error: 'Error removing product'})
+    }
+})
+
+//  clear whole cart
+
+router.put('/cart/clear/:id',async(req,res)=>{
+    try{
+        const user = await User.findOneAndUpdate({_id:req.params.id},{$set:{cart:[]}});
+        if(!user) return res.status(400).json({message:"could not clear the cart."})
+        res.status(200).json({message:"Cart clear."})
     }catch(error){
         res.status(500).json({error: 'Error removing product'})
     }
