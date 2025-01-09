@@ -4,6 +4,7 @@ const router = express.Router();
 const User = require("../models/user.models");
 
 const Product = require("../models/product.models");
+const Order = require("../models/orders.models");
 
 // get endpoint
 
@@ -187,38 +188,35 @@ router.delete('/wishlist/remove-from-wishlist', async(req,res)=>{
 
 // order history management
 
-router.get('/orders/:id', async(req,res)=>{
+router.get('/:id/orders', async(req,res)=>{
     try{
-        const user = await User.findById(req.params.id);
+        // const user = await User.findById(req.params.id);
                                 // .populate('cart.product');
-        
-        if(user){
-            const orderDetails = user.orders.map((item)=>(
-                {
-                product: item.product,
-                quantity: item.quantity
-            }));
-
-            res.status(200).json(orderDetails);
-        }else{
-            res.status(404).json({error: 'User not found'})
-        }
+        const orders = await Order.find({userId:req.params.id}).populate('items.product').populate('address')
+        if(!orders){
+            return res.status(400).json({message:'No orders found for the user'})
+        }    
+        res.status(200).json(orders);
     }catch(error){
         res.status(500).json({error: error.message})
     }
 })
 
-// router.get('/orders/:id',async(req,res)=>{
-//     try{
-//         const user = await User.findById(req.params.id);
-//         if(!user) return res.status(404).json({error:'User not found, to fetch order items'})
-//         return res.status(200).json(user.orders);
-//     }catch(error){
-//         res.status(500).json({error:error.message});
-//     }
-// })
-
-// add item to cart or increase quantity if it already exists.
+router.post('/:id/orders', async(req,res)=>{
+    try {
+        const {cart,totalPrice,address} = req.body;
+        const order = new Order({
+            userId: req.params.id,
+            items: cart,
+            totalAmount: totalPrice,
+            address:address
+        })
+        await order.save();
+        res.status(200).json({message:"OK"})
+    } catch (error) {
+        res.status(500).json({error: error.message})
+    }
+})
 
 router.post('/cart/add-to-cart', async(req,res)=>{
     try{
